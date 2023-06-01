@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebRTC Webcam Streaming</title>
+  <style>
+    #video {
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <video id="video" autoplay></video>
+
+  <script>
+    // Access the webcam stream
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        const videoElement = document.getElementById('video');
+        videoElement.srcObject = stream;
+
+        // Create a PeerConnection
+        const peerConnection = new RTCPeerConnection();
+
+        // Add the webcam stream to the PeerConnection
+        const videoTrack = stream.getVideoTracks()[0];
+        peerConnection.addTrack(videoTrack, stream);
+
+        // Create an offer and set it as the local description
+        peerConnection.createOffer()
+          .then(offer => peerConnection.setLocalDescription(offer))
+          .then(() => {
+            // Send the offer to the server for signaling
+            const offerSdp = peerConnection.localDescription.sdp;
+            sendOfferToServer(offerSdp);
+          })
+          .catch(error => {
+            console.error('Error creating offer:', error);
+          });
+
+        // Handle incoming signaling messages from the server
+        receiveSignalingMessageFromServer = (message) => {
+          if (message.type === 'answer') {
+            // Set the received answer as the remote description
+            const answerSdp = message.sdp;
+            const answer = new RTCSessionDescription({ type: 'answer', sdp: answerSdp });
+            peerConnection.setRemoteDescription(answer);
+          }
+        };
+
+        // Handle incoming video streams from the remote peer
+        peerConnection.ontrack = (event) => {
+          const remoteStream = event.streams[0];
+          const remoteVideoElement = document.createElement('video');
+          remoteVideoElement.srcObject = remoteStream;
+          document.body.appendChild(remoteVideoElement);
+        };
+      })
+      .catch(error => {
+        console.error('Error accessing webcam:', error);
+      });
+
+    // Function to send the offer to the server
+    function sendOfferToServer(offerSdp) {
+      // Implement your server-side logic to send the offer to the server
+      // You can use AJAX, WebSocket, or any other mechanism to send the offer
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Periodic Image Capture</title>
+  <style>
+    video {
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Periodic Image Capture</h1>
+
+  <video id="localVideo" autoplay></video>
+
+  <script>
+    let localStream;
+    let socket;
+
+    const localVideoElement = document.getElementById('localVideo');
+
+    // Function to start the stream
+    async function startStream() {
+      try {
+        // Access the user's media devices
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        localVideoElement.srcObject = localStream;
+
+        // Set up WebSocket connection
+        socket = new WebSocket('ws://localhost:8080/ws');
+
+        // WebSocket connection opened
+        socket.onopen = () => {
+          console.log('WebSocket connection opened');
+        };
+
+        // WebSocket connection closed
+        socket.onclose = () => {
+          console.log('WebSocket connection closed');
+        };
+
+        // WebSocket connection error
+        socket.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        // Capture and send image periodically
+        setInterval(captureAndSendImage, 2000); // Adjust the interval as needed
+      } catch (error) {
+        console.error('Error accessing media devices:', error);
+      }
+    }
+
+    // Function to capture and send image data
+    function captureAndSendImage() {
+      const canvas = document.createElement('canvas');
+      canvas.width = localVideoElement.videoWidth;
+      canvas.height = localVideoElement.videoHeight;
+
+      const context = canvas.getContext('2d');
+      context.drawImage(localVideoElement, 0, 0, canvas.width, canvas.height);
+      const imageData = canvas.toDataURL('image/jpeg');
+
+      console.log("Sending imageData:", imageData);
+      // Send the image data to the server via WebSocket
+      socket.send(imageData);
+    }
+
+    // Start the stream when the page loads
+    window.onload = () => {
+      startStream();
+    };
+  </script>
+</body>
+</html>
