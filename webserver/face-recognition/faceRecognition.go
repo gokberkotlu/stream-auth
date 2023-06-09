@@ -18,12 +18,14 @@ import (
 type IRecCh struct {
 	id        int
 	imageData []byte
+	ts        int64
 }
 
 // Recognize response
 type IRecRes struct {
 	Name string          `json:"name"`
 	Rect image.Rectangle `json:"rect"`
+	Id   int             `json:"id"`
 }
 
 const dataDir = "./"
@@ -38,15 +40,18 @@ var faces []face.Face = []face.Face{}
 var labels []string = []string{}
 
 // var recCh chan []byte = make(chan []byte)
-var recCh chan IRecCh = make(chan IRecCh)
+var recCh chan IRecCh = make(chan IRecCh, 1)
 
 var counter int = 0
+
+var lastImageProcessTimestamp int64 = 0
 
 func QueueImageRec(imageData []byte) {
 	fmt.Println("Add image to queue!")
 	recData := IRecCh{
 		id:        counter,
 		imageData: imageData,
+		ts:        time.Now().Unix(),
 	}
 
 	counter += 1
@@ -67,7 +72,6 @@ func InitImgDb() {
 	if err != nil {
 		log.Fatalf("Can't init face recognizer: %v", err)
 	}
-	// defer Rec.Close()
 
 	for _, imgName := range GetImageList() {
 		refImage := filepath.Join(imagesDir, imgName)
@@ -106,7 +110,9 @@ func PerformFaceRecognition(recData IRecCh, wsConn *websocket.Conn) {
 	fmt.Println(time.Now())
 
 	if userFace == nil {
-		fmt.Println("Not a single face on the image")
+		noFaceDetectedMessage := "Not a single face on the image"
+		fmt.Println(noFaceDetectedMessage)
+		sendWsRes(wsConn, []byte(noFaceDetectedMessage))
 	} else {
 		ID := Rec.ClassifyThreshold(userFace.Descriptor, 0.4)
 		fmt.Println("ID:", ID)
@@ -123,13 +129,14 @@ func PerformFaceRecognition(recData IRecCh, wsConn *websocket.Conn) {
 			wsRes := IRecRes{
 				Rect: userFace.Rectangle,
 				Name: labels[ID],
+				Id:   recData.id,
 			}
 
 			// Convert the rectangle to JSON
 			rectJSON, err := json.Marshal(wsRes)
-			// rectJSON, err := json.Marshal(userFace.Rectangle)
 			if err != nil {
-				log.Printf("Failed to convert image.Rectangle to JSON: %v", err)
+				errMessage := fmt.Sprintf("Failed to convert image.Rectangle to JSON: %v", err)
+				sendWsRes(wsConn, []byte(errMessage))
 				return
 			}
 
@@ -137,11 +144,25 @@ func PerformFaceRecognition(recData IRecCh, wsConn *websocket.Conn) {
 			err = wsConn.WriteMessage(websocket.TextMessage, rectJSON)
 			if err != nil {
 				log.Printf("Failed to send response to WebSocket client: %v", err)
-				// break
 			}
+
+			lastImageProcessTimestamp = recData.ts
+			fmt.Println("(*updated)lastImageProcessTimestamp", lastImageProcessTimestamp)
+		} else {
+			notRecognizedText := "Not a single face on the image"
+			fmt.Println(notRecognizedText)
+			sendWsRes(wsConn, []byte(notRecognizedText))
 		}
 	}
 	fmt.Println("COUNTER:", recData.id)
+}
+
+func sendWsRes(wsConn *websocket.Conn, message []byte) {
+	// Send a response back to the client
+	err := wsConn.WriteMessage(websocket.TextMessage, message)
+	if err != nil {
+		log.Printf("Failed to send response to WebSocket client: %v", err)
+	}
 }
 
 func GetImageList() []string {

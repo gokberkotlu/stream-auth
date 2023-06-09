@@ -45,6 +45,7 @@ const Login: React.FC = () => {
       };
 
       socket.onmessage = (message) => {
+        captureAndSendImage();
         console.log(message.data, typeof message.data);
         if (message?.data) {
           let response: IRecRes;
@@ -52,7 +53,7 @@ const Login: React.FC = () => {
           try {
             response = JSON.parse(message.data);
           } catch (err) {
-            console.log(err);
+            setRectanglePoints("0,0 0,0 0,0 0,0");
             return;
           }
 
@@ -83,7 +84,11 @@ const Login: React.FC = () => {
       };
 
       // Capture and send image periodically
-      setInterval(captureAndSendImage, 2000); // Adjust the interval as needed
+      // setInterval(captureAndSendImage, 1000); // Adjust the interval as needed
+
+      videoElement.current?.addEventListener("canplay", () => {
+        captureAndSendImage();
+      });
     } catch (error) {
       console.error("Error accessing media devices:", error);
     }
@@ -98,32 +103,40 @@ const Login: React.FC = () => {
 
   // Function to capture and send image data
   const captureAndSendImage = () => {
-    console.log("send image");
-    const canvas = document.createElement("canvas");
-    const context = canvas.getContext("2d");
+    try {
+      console.log("send image");
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
 
-    if (videoElement.current) {
-      canvas.width = videoElement.current.videoWidth;
-      canvas.height = videoElement.current.videoHeight;
+      if (videoElement.current) {
+        canvas.width = videoElement.current.videoWidth;
+        canvas.height = videoElement.current.videoHeight;
 
-      context?.drawImage(
-        videoElement.current,
-        0,
-        0,
-        canvas.width,
-        canvas.height
+        context?.drawImage(
+          videoElement.current,
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
+      }
+
+      const imageData = canvas.toDataURL("image/jpeg");
+
+      // Send the image data to the server via WebSocket
+      socket.send(imageData);
+
+      const date = new Date();
+      console.log(
+        `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
       );
+    } catch (err) {
+      console.log("captureAndSendImage error:", err);
     }
-
-    const imageData = canvas.toDataURL("image/jpeg");
-
-    // Send the image data to the server via WebSocket
-    socket.send(imageData);
   };
 
   useEffect(() => {
     startStream();
-    videoElement.current?.addEventListener("playing", (e) => {console.log(e) });
 
     return () => closeWsConnection();
   }, []);
@@ -151,8 +164,8 @@ const Login: React.FC = () => {
             points={rectanglePoints}
             style={{
               fill: "transparent",
-              stroke: "#333",
-              strokeWidth: 1,
+              stroke: "#DC143C",
+              strokeWidth: 2,
             }}
           />
         </svg>

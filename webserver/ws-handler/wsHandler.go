@@ -3,8 +3,9 @@ package wshandler
 import (
 	"log"
 	"net/http"
-	"runtime"
-	"sync"
+
+	// "runtime"
+	// "sync"
 
 	faceRecognition "stream-auth-webserver/face-recognition"
 	imagedatacont "stream-auth-webserver/image-data-cont"
@@ -17,9 +18,11 @@ var upgrader = websocket.Upgrader{
 		// Allow connections from any origin
 		return true
 	},
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
 
-var mutex sync.Mutex
+// var mutex sync.Mutex
 
 // WebSocket handler function
 func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +31,7 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println("Failed to upgrade connection:", err)
 		return
 	}
-	// defer conn.Close()
+	defer conn.Close()
 
 	go faceRecognition.ConsumeImageRec(conn)
 
@@ -42,12 +45,12 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update the latest image data
-		mutex.Lock()
-		runtime.LockOSThread()
+		// mutex.Lock()
+		// runtime.LockOSThread()
 
 		var latestImageData []byte = imagedatacont.ImageDataDecoder(imageData)
 		faceRecognition.QueueImageRec(latestImageData)
-		mutex.Unlock()
+		// mutex.Unlock()
 
 		// go faceRecognition.PerformFaceRecognition(latestImageData, conn)
 		// faceRecognition.QueueImageRec(latestImageData)
