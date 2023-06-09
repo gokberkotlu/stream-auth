@@ -4,14 +4,16 @@ import (
 	"log"
 	"net/http"
 
-	// "runtime"
-	// "sync"
+	"runtime"
+	"sync"
 
 	faceRecognition "stream-auth-webserver/face-recognition"
 	imagedatacont "stream-auth-webserver/image-data-cont"
 
 	"github.com/gorilla/websocket"
 )
+
+var mutex = sync.Mutex{}
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
@@ -33,8 +35,6 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	go faceRecognition.ConsumeImageRec(conn)
-
 	for {
 		// Read the message from the client
 		_, imageData, err := conn.ReadMessage()
@@ -45,14 +45,12 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Update the latest image data
-		// mutex.Lock()
-		// runtime.LockOSThread()
+		mutex.Lock()
+		runtime.LockOSThread()
 
 		var latestImageData []byte = imagedatacont.ImageDataDecoder(imageData)
-		faceRecognition.QueueImageRec(latestImageData)
-		// mutex.Unlock()
+		mutex.Unlock()
 
-		// go faceRecognition.PerformFaceRecognition(latestImageData, conn)
-		// faceRecognition.QueueImageRec(latestImageData)
+		go faceRecognition.PerformFaceRecognition(latestImageData, conn)
 	}
 }

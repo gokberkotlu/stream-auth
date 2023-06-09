@@ -14,13 +14,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// Recognize channel
-type IRecCh struct {
-	id        int
-	imageData []byte
-	ts        int64
-}
-
 // Recognize response
 type IRecRes struct {
 	Name string          `json:"name"`
@@ -38,33 +31,6 @@ var (
 var Rec *face.Recognizer
 var faces []face.Face = []face.Face{}
 var labels []string = []string{}
-
-// var recCh chan []byte = make(chan []byte)
-var recCh chan IRecCh = make(chan IRecCh, 1)
-
-var counter int = 0
-
-var lastImageProcessTimestamp int64 = 0
-
-func QueueImageRec(imageData []byte) {
-	fmt.Println("Add image to queue!")
-	recData := IRecCh{
-		id:        counter,
-		imageData: imageData,
-		ts:        time.Now().Unix(),
-	}
-
-	counter += 1
-
-	recCh <- recData
-}
-
-func ConsumeImageRec(wsConn *websocket.Conn) {
-	fmt.Println("Start to waiting new images!")
-	for recData := range recCh {
-		go PerformFaceRecognition(recData, wsConn)
-	}
-}
 
 func InitImgDb() {
 	var err error
@@ -101,9 +67,9 @@ func InitImgDb() {
 	fmt.Println("Rec val:", Rec)
 }
 
-func PerformFaceRecognition(recData IRecCh, wsConn *websocket.Conn) {
+func PerformFaceRecognition(imageData []byte, wsConn *websocket.Conn) {
 	fmt.Println(time.Now())
-	userFace, err := Rec.RecognizeSingleCNN(recData.imageData)
+	userFace, err := Rec.RecognizeSingleCNN(imageData)
 	if err != nil {
 		fmt.Printf("Can't recognize: %v\n", err)
 	}
@@ -129,7 +95,6 @@ func PerformFaceRecognition(recData IRecCh, wsConn *websocket.Conn) {
 			wsRes := IRecRes{
 				Rect: userFace.Rectangle,
 				Name: labels[ID],
-				Id:   recData.id,
 			}
 
 			// Convert the rectangle to JSON
@@ -145,16 +110,12 @@ func PerformFaceRecognition(recData IRecCh, wsConn *websocket.Conn) {
 			if err != nil {
 				log.Printf("Failed to send response to WebSocket client: %v", err)
 			}
-
-			lastImageProcessTimestamp = recData.ts
-			fmt.Println("(*updated)lastImageProcessTimestamp", lastImageProcessTimestamp)
 		} else {
 			notRecognizedText := "Not a single face on the image"
 			fmt.Println(notRecognizedText)
 			sendWsRes(wsConn, []byte(notRecognizedText))
 		}
 	}
-	fmt.Println("COUNTER:", recData.id)
 }
 
 func sendWsRes(wsConn *websocket.Conn, message []byte) {
