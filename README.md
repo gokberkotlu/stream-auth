@@ -1,10 +1,19 @@
-brew install pkg-config
+# STREAM-AUTH
 
-https://tutorialedge.net/golang/go-face-recognition-tutorial-part-one/
+- Library for face recognition
+https://pkg.go.dev/github.com/Kagami/go-face#section-readme
 
+- Run WebServer
 
+```
+cd webserver/
+go run main.go
+```
 
-<!-- sudo apt-get install libdlib-dev
-sudo apt-get install libjpeg-dev -->
+- Run WebUI
 
-sudo apt-get install libdlib-dev libblas-dev libatlas-base-dev liblapack-dev libjpeg-turbo8-dev
+```
+cd webui/
+npm install
+npm start
+```
