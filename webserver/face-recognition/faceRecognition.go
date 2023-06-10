@@ -146,7 +146,7 @@ func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte
 			}
 
 			// Save user image to file system if user is not defined before
-			imagedatacont.SaveImage(rawImageData, userName)
+			imagedatacont.RegisterUser(rawImageData, userName)
 
 			// Send a response back to the client
 			err = wsConn.WriteMessage(websocket.TextMessage, rectJSON)

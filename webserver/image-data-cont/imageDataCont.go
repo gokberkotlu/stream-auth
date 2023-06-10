@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+type ICachedUserImages struct {
+	FileName  string
+	ImageData []byte
+}
+
+var CachedUsers = map[string][]ICachedUserImages{}
+
 func ImageDataDecoder(imageData []byte) []byte {
 	encodedBase64StrImageData := string(imageData)
 	// fmt.Println(imageData)
@@ -39,14 +46,28 @@ func ImageDataEncodedBuffer(imageData []byte) []byte {
 	return encodedBuffer
 }
 
-func SaveImage(imageData []byte, userName string) {
-	decodedData := ImageDataDecoder(imageData)
-
+func RegisterUser(imageData []byte, userName string) {
 	salt := "_#^!?_"
 	fileName := fmt.Sprintf("./images/%s%s%s.jpg", userName, salt, strconv.FormatInt(time.Now().Unix(), 10))
 
+	CachedUsers[userName] = append(CachedUsers[userName], ICachedUserImages{
+		FileName:  fileName,
+		ImageData: imageData,
+		// ImageData: []byte("imageData"),
+	})
+
+	if len(CachedUsers[userName]) == 5 {
+		for _, userImage := range CachedUsers[userName] {
+			SaveImage(userImage)
+		}
+	}
+}
+
+func SaveImage(userImage ICachedUserImages) {
+	decodedData := ImageDataDecoder(userImage.ImageData)
+
 	// Save the decoded data to a file for verification
-	err := ioutil.WriteFile(fileName, decodedData, 0644)
+	err := ioutil.WriteFile(userImage.FileName, decodedData, 0644)
 	if err != nil {
 		fmt.Println("Error saving image:", err)
 	}
