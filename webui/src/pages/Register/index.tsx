@@ -1,6 +1,7 @@
 import { Button, Input, message } from "antd";
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { HomeOutlined } from "@ant-design/icons";
 
 interface ISingleRecRes {
   Min: {
@@ -162,8 +163,7 @@ const Register: React.FC = () => {
   }, []);
 
   return (
-    <div>
-      <h1>Periodic Image Capture</h1>
+    <div style={{ height: "100vh", backgroundColor: "#c3c3c3" }}>
       <div
         className="videoRect"
         style={{ position: "relative", display: "inline-block" }}
@@ -191,30 +191,59 @@ const Register: React.FC = () => {
       </div>
       <br />
       <br />
-      <Input
-        style={{ width: 200 }}
-        placeholder="Enter username"
-        value={userName}
-        onChange={(e) => {
-          setUserName(e.target.value);
+      <div
+        style={{
+          display: "inline-block",
         }}
-      />
-      <Button
-        type="primary"
-        onClick={startRegistration}
-        style={{ marginLeft: 5, marginRight: 5 }}
       >
-        Start Registration
-      </Button>
-      <Button
-        type="primary"
-        onClick={stopRegistration}
-        style={{ marginRight: 5 }}
-      >
-        Stop Registration
-      </Button>
+        <Input
+          style={{ width: 400, height: 60 }}
+          placeholder="Enter username"
+          value={userName}
+          onChange={(e) => {
+            setUserName(e.target.value);
+          }}
+        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: 15,
+          }}
+        >
+          <Button
+            type="primary"
+            onClick={startRegistration}
+            danger
+            style={{ marginLeft: 5, marginRight: 5, width: "100%", height: 45 }}
+          >
+            Start Registration
+          </Button>
+          <Button
+            type="primary"
+            onClick={stopRegistration}
+            danger
+            style={{ marginRight: 5, width: "100%", height: 45 }}
+          >
+            Stop Registration
+          </Button>
+        </div>
+      </div>
+
       <Link to="/">
-        <Button type="primary">Back Home</Button>
+        <Button
+          type="primary"
+          shape="circle"
+          size="large"
+          style={{
+            position: "absolute",
+            top: 20,
+            left: 30,
+          }}
+        >
+          <HomeOutlined />
+        </Button>
       </Link>
     </div>
   );

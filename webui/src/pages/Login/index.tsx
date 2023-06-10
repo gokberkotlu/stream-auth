@@ -167,12 +167,10 @@ const Login: React.FC<Props> = ({ setLoggedIn }) => {
   }, []);
 
   return (
-    <div>
-      <h1>Periodic Image Capture</h1>
-
+    <div style={{ backgroundColor: "#c3c3c3", height: "100vh" }}>
       <div
         className="videoRect"
-        style={{ position: "relative", display: "inline-block" }}
+        style={{ position: "relative", display: "inline-block", marginTop: "10vh" }}
       >
         <video ref={videoElement} autoPlay></video>
 
@@ -210,7 +208,11 @@ const Login: React.FC<Props> = ({ setLoggedIn }) => {
         <br />
         <br />
         <Link to="/register">
-          <Button type="primary">Register</Button>
+          <Button type="primary" danger style={{
+            width: "17vw",
+            height: "70px",
+            fontWeight: 900,
+          }}>Register</Button>
         </Link>
       </div>
     </div>
