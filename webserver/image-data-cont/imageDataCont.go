@@ -16,6 +16,8 @@ type ICachedUserImages struct {
 
 var CachedUsers = map[string][]ICachedUserImages{}
 
+var Salt string = "_#^!?_"
+
 func ImageDataDecoder(imageData []byte) []byte {
 	encodedBase64StrImageData := string(imageData)
 	// fmt.Println(imageData)
@@ -47,8 +49,7 @@ func ImageDataEncodedBuffer(imageData []byte) []byte {
 }
 
 func RegisterUser(imageData []byte, userName string) bool {
-	salt := "_#^!?_"
-	fileName := fmt.Sprintf("./images/%s%s%s.jpg", userName, salt, strconv.FormatInt(time.Now().Unix(), 10))
+	fileName := fmt.Sprintf("./images/%s%s%s.jpg", userName, Salt, strconv.FormatInt(time.Now().Unix(), 10))
 
 	CachedUsers[userName] = append(CachedUsers[userName], ICachedUserImages{
 		FileName:  fileName,

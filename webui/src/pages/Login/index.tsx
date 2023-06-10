@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface IRecRes {
   name: string;
@@ -14,9 +15,10 @@ interface IRecRes {
   };
 }
 
-const socket = new WebSocket("ws://localhost:8080/face-rec");
-
 const Login: React.FC = () => {
+  const socket = new WebSocket("ws://localhost:8080/face-rec");
+  const navigate = useNavigate();
+
   const [rectanglePoints, setRectanglePoints] = useState<string>();
   const [userName, setUserName] = useState<string>("");
 
@@ -70,6 +72,8 @@ const Login: React.FC = () => {
             setRectanglePoints(
               `${x1},${y1} ${x2},${y1} ${x2},${y2} ${x1},${y2}`
             );
+
+            login(name);
           } else {
             setRectanglePoints("0,0 0,0 0,0 0,0");
           }
@@ -135,10 +139,18 @@ const Login: React.FC = () => {
     }
   };
 
+  const login = (userName: string) => {
+    localStorage.setItem("stream_auth_user", userName);
+    closeWsConnection();
+    navigate("/dashboard");
+  };
+
   useEffect(() => {
     startStream();
 
-    return () => closeWsConnection();
+    return () => {
+      closeWsConnection();
+    };
   }, []);
 
   return (

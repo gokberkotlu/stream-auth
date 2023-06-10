@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"reflect"
 	imagedatacont "stream-auth-webserver/image-data-cont"
+	"strings"
 	"time"
 
 	"github.com/Kagami/go-face"
@@ -51,7 +51,9 @@ func InitImgDb() {
 
 		faces = append(faces, recognizedFaces...)
 
-		labels = append(labels, imgName)
+		userName := strings.Split(imgName, imagedatacont.Salt)[0]
+
+		labels = append(labels, userName)
 	}
 
 	var samples []face.Descriptor
@@ -85,13 +87,8 @@ func PerformFaceRecognition(imageData []byte, wsConn *websocket.Conn) {
 		fmt.Println("ID:", ID)
 
 		if ID != -1 {
-			// recCh <- imageData
-			fmt.Println("name:", labels[ID])
-
 			fmt.Println(userFace.Rectangle)
 			fmt.Println(userFace.Shapes)
-
-			fmt.Println("RECTANGLE", reflect.TypeOf(userFace.Rectangle))
 
 			wsRes := IRecRes{
 				Rect: userFace.Rectangle,
@@ -112,7 +109,7 @@ func PerformFaceRecognition(imageData []byte, wsConn *websocket.Conn) {
 				log.Printf("Failed to send response to WebSocket client: %v", err)
 			}
 		} else {
-			notRecognizedText := "Not a single face on the image"
+			notRecognizedText := "User not identified"
 			fmt.Println(notRecognizedText)
 			sendWsRes(wsConn, []byte(notRecognizedText))
 		}
