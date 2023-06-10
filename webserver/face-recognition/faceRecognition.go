@@ -135,8 +135,7 @@ func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte
 		ID := Rec.ClassifyThreshold(userFace.Descriptor, 0.4)
 		fmt.Println("ID:", ID)
 
-		// if ID == -1 {
-		if true {
+		if ID == -1 {
 			// Convert the rectangle to JSON
 			rectJSON, err := json.Marshal(userFace.Rectangle)
 			if err != nil {
@@ -146,7 +145,11 @@ func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte
 			}
 
 			// Save user image to file system if user is not defined before
-			imagedatacont.RegisterUser(rawImageData, userName)
+			registerResult := imagedatacont.RegisterUser(rawImageData, userName)
+			// if registration done, add images to Rec
+			if registerResult {
+				InitImgDb()
+			}
 
 			// Send a response back to the client
 			err = wsConn.WriteMessage(websocket.TextMessage, rectJSON)

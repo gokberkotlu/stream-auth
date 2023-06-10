@@ -46,21 +46,24 @@ func ImageDataEncodedBuffer(imageData []byte) []byte {
 	return encodedBuffer
 }
 
-func RegisterUser(imageData []byte, userName string) {
+func RegisterUser(imageData []byte, userName string) bool {
 	salt := "_#^!?_"
 	fileName := fmt.Sprintf("./images/%s%s%s.jpg", userName, salt, strconv.FormatInt(time.Now().Unix(), 10))
 
 	CachedUsers[userName] = append(CachedUsers[userName], ICachedUserImages{
 		FileName:  fileName,
 		ImageData: imageData,
-		// ImageData: []byte("imageData"),
 	})
 
 	if len(CachedUsers[userName]) == 5 {
 		for _, userImage := range CachedUsers[userName] {
 			SaveImage(userImage)
 		}
+
+		return true
 	}
+
+	return false
 }
 
 func SaveImage(userImage ICachedUserImages) {

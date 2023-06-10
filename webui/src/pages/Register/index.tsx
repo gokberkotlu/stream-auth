@@ -1,3 +1,4 @@
+import { Button, Input, message } from "antd";
 import React, { useEffect, useRef, useState } from "react";
 
 interface ISingleRecRes {
@@ -11,18 +12,23 @@ interface ISingleRecRes {
   };
 }
 
-const socket = new WebSocket("ws://localhost:8080/face-register?name=thename");
+// const socketRef.current = new WebSocket("ws://localhost:8080/face-register?name=thename");
 
 const Register: React.FC = () => {
   const [rectanglePoints, setRectanglePoints] = useState<string>();
   const [userName, setUserName] = useState<string>("");
 
+  const socketRef = useRef<WebSocket | null>(null);
   const registerCount = useRef<number>(5);
 
   const videoElement = useRef<HTMLVideoElement>(null);
 
   const startStream = async () => {
     try {
+      socketRef.current = new WebSocket(
+        `ws://localhost:8080/face-register?name=${userName}`
+      );
+
       // Access the user's media devices
       let localStream = await navigator.mediaDevices.getUserMedia({
         video: true,
@@ -34,25 +40,26 @@ const Register: React.FC = () => {
       }
 
       // WebSocket connection opened
-      socket.onopen = () => {
+      socketRef.current.onopen = () => {
         console.log("WebSocket connection opened");
       };
 
       // WebSocket connection closed
-      socket.onclose = () => {
+      socketRef.current.onclose = () => {
         console.log("WebSocket connection closed");
       };
 
-      socket.onmessage = (message) => {
+      socketRef.current.onmessage = (socketMessage) => {
         if (registerCount.current > 1) {
           captureAndSendImage();
-          console.log(message.data, typeof message.data);
-          if (message?.data) {
+          console.log(socketMessage.data, typeof socketMessage.data);
+          if (socketMessage?.data) {
             let rect: ISingleRecRes;
 
             try {
-              rect = JSON.parse(message.data);
+              rect = JSON.parse(socketMessage.data);
             } catch (err) {
+              message.error(socketMessage.data);
               setRectanglePoints("0,0 0,0 0,0 0,0");
               return;
             }
@@ -77,7 +84,7 @@ const Register: React.FC = () => {
       };
 
       // WebSocket connection error
-      socket.onerror = (error) => {
+      socketRef.current.onerror = (error) => {
         console.error("WebSocket error:", error);
       };
 
@@ -91,8 +98,8 @@ const Register: React.FC = () => {
 
   const closeWsConnection = () => {
     // Check if the connection is still open before attempting to close it
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.close();
+    if (socketRef.current && socketRef.current.readyState === WebSocket.OPEN) {
+      socketRef.current.close();
     }
   };
 
@@ -118,8 +125,10 @@ const Register: React.FC = () => {
 
       const imageData = canvas.toDataURL("image/jpeg");
 
-      // Send the image data to the server via WebSocket
-      socket.send(imageData);
+      if (socketRef.current) {
+        // Send the image data to the server via WebSocket
+        socketRef.current.send(imageData);
+      }
 
       const date = new Date();
       console.log(
@@ -130,8 +139,16 @@ const Register: React.FC = () => {
     }
   };
 
-  useEffect(() => {
+  const startRegistration = () => {
     startStream();
+  };
+
+  const stopRegistration = () => {
+    closeWsConnection();
+  };
+
+  useEffect(() => {
+    // startStream();
 
     return () => closeWsConnection();
   }, []);
@@ -139,7 +156,6 @@ const Register: React.FC = () => {
   return (
     <div>
       <h1>Periodic Image Capture</h1>
-
       <div
         className="videoRect"
         style={{ position: "relative", display: "inline-block" }}
@@ -165,6 +181,26 @@ const Register: React.FC = () => {
           />
         </svg>
       </div>
+      <br />
+      <br />
+      <Input
+        style={{ width: 200 }}
+        placeholder="Enter username"
+        value={userName}
+        onChange={(e) => {
+          setUserName(e.target.value);
+        }}
+      />
+      <Button
+        type="primary"
+        onClick={startRegistration}
+        style={{ marginLeft: 5, marginRight: 5 }}
+      >
+        Start Registration
+      </Button>
+      <Button type="primary" onClick={stopRegistration}>
+        Stop Registration
+      </Button>
     </div>
   );
 };
