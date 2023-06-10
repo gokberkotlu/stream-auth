@@ -1,24 +1,23 @@
 import React, { useEffect, useRef, useState } from "react";
 
-interface IRecRes {
-  name: string;
-  rect: {
-    Min: {
-      X: number;
-      Y: number;
-    };
-    Max: {
-      X: number;
-      Y: number;
-    };
+interface ISingleRecRes {
+  Min: {
+    X: number;
+    Y: number;
+  };
+  Max: {
+    X: number;
+    Y: number;
   };
 }
 
-const socket = new WebSocket("ws://localhost:8080/face-rec");
+const socket = new WebSocket("ws://localhost:8080/face-register?name=thename");
 
-const Login: React.FC = () => {
+const Register: React.FC = () => {
   const [rectanglePoints, setRectanglePoints] = useState<string>();
   const [userName, setUserName] = useState<string>("");
+
+  const registerCount = useRef<number>(5);
 
   const videoElement = useRef<HTMLVideoElement>(null);
 
@@ -45,31 +44,30 @@ const Login: React.FC = () => {
       };
 
       socket.onmessage = (message) => {
-        captureAndSendImage();
-        console.log(message.data, typeof message.data);
-        if (message?.data) {
-          let response: IRecRes;
+        if (registerCount.current > 1) {
+          captureAndSendImage();
+          console.log(message.data, typeof message.data);
+          if (message?.data) {
+            let rect: ISingleRecRes;
 
-          try {
-            response = JSON.parse(message.data);
-          } catch (err) {
-            setRectanglePoints("0,0 0,0 0,0 0,0");
-            return;
-          }
+            try {
+              rect = JSON.parse(message.data);
+            } catch (err) {
+              setRectanglePoints("0,0 0,0 0,0 0,0");
+              return;
+            }
 
-          const { name, rect } = response;
+            const { X: x1, Y: y1 } = rect?.Min;
+            const { X: x2, Y: y2 } = rect?.Max;
 
-          const { X: x1, Y: y1 } = rect?.Min;
-          const { X: x2, Y: y2 } = rect?.Max;
-
-          if (name) {
-            setUserName(name);
-          }
-
-          if (x1 && y1 && x2 && y2) {
-            setRectanglePoints(
-              `${x1},${y1} ${x2},${y1} ${x2},${y2} ${x1},${y2}`
-            );
+            if (x1 && y1 && x2 && y2) {
+              setRectanglePoints(
+                `${x1},${y1} ${x2},${y1} ${x2},${y2} ${x1},${y2}`
+              );
+              registerCount.current -= 1;
+            } else {
+              setRectanglePoints("0,0 0,0 0,0 0,0");
+            }
           } else {
             setRectanglePoints("0,0 0,0 0,0 0,0");
           }
@@ -82,9 +80,6 @@ const Login: React.FC = () => {
       socket.onerror = (error) => {
         console.error("WebSocket error:", error);
       };
-
-      // Capture and send image periodically
-      // setInterval(captureAndSendImage, 1000); // Adjust the interval as needed
 
       videoElement.current?.addEventListener("canplay", () => {
         captureAndSendImage();
@@ -169,20 +164,9 @@ const Login: React.FC = () => {
             }}
           />
         </svg>
-        <span
-          style={{
-            position: "absolute",
-            width: "100%",
-            height: "100%",
-            left: 0,
-            top: 0,
-          }}
-        >
-          {userName}
-        </span>
       </div>
     </div>
   );
 };
 
-export default Login;
+export default Register;

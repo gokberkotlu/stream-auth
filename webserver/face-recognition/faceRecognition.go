@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	imagedatacont "stream-auth-webserver/image-data-cont"
 	"time"
 
 	"github.com/Kagami/go-face"
@@ -112,6 +113,48 @@ func PerformFaceRecognition(imageData []byte, wsConn *websocket.Conn) {
 			}
 		} else {
 			notRecognizedText := "Not a single face on the image"
+			fmt.Println(notRecognizedText)
+			sendWsRes(wsConn, []byte(notRecognizedText))
+		}
+	}
+}
+
+func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte, userName string, wsConn *websocket.Conn) {
+	fmt.Println(time.Now())
+	userFace, err := Rec.RecognizeSingleCNN(encodedImageDataBuffer)
+	if err != nil {
+		fmt.Printf("Can't recognize: %v\n", err)
+	}
+	fmt.Println(time.Now())
+
+	if userFace == nil {
+		noFaceDetectedMessage := "Not a single face on the image"
+		fmt.Println(noFaceDetectedMessage)
+		sendWsRes(wsConn, []byte(noFaceDetectedMessage))
+	} else {
+		ID := Rec.ClassifyThreshold(userFace.Descriptor, 0.4)
+		fmt.Println("ID:", ID)
+
+		// if ID == -1 {
+		if true {
+			// Convert the rectangle to JSON
+			rectJSON, err := json.Marshal(userFace.Rectangle)
+			if err != nil {
+				errMessage := fmt.Sprintf("Failed to convert image.Rectangle to JSON: %v", err)
+				sendWsRes(wsConn, []byte(errMessage))
+				return
+			}
+
+			// Save user image to file system if user is not defined before
+			imagedatacont.SaveImage(rawImageData, userName)
+
+			// Send a response back to the client
+			err = wsConn.WriteMessage(websocket.TextMessage, rectJSON)
+			if err != nil {
+				log.Printf("Failed to send response to WebSocket client: %v", err)
+			}
+		} else {
+			notRecognizedText := "User already defined"
 			fmt.Println(notRecognizedText)
 			sendWsRes(wsConn, []byte(notRecognizedText))
 		}

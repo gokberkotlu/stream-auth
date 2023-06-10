@@ -3,7 +3,10 @@ package imagedatacont
 import (
 	"encoding/base64"
 	"fmt"
+	"io/ioutil"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func ImageDataDecoder(imageData []byte) []byte {
@@ -14,7 +17,6 @@ func ImageDataDecoder(imageData []byte) []byte {
 	parts := strings.Split(encodedBase64StrImageData, ",")
 	if len(parts) != 2 {
 		fmt.Println("Invalid image data URI")
-		// return
 	}
 
 	// Extract the base64-encoded image data
@@ -24,19 +26,28 @@ func ImageDataDecoder(imageData []byte) []byte {
 	decodedData, err := base64.StdEncoding.DecodeString(base64Data)
 	if err != nil {
 		fmt.Println("Error decoding base64 data:", err)
-		// return
 	}
 
-	// Save the decoded data to a file for verification
-	// err = ioutil.WriteFile("image.jpg", decodedData, 0644)
-	// if err != nil {
-	// 	fmt.Println("Error saving image:", err)
-	// 	// return
-	// }
+	return decodedData
+}
+
+func ImageDataEncodedBuffer(imageData []byte) []byte {
+	decodedData := ImageDataDecoder(imageData)
 
 	encodedBuffer := []byte(decodedData)
 
-	// fmt.Println(encodedBuffer)
-
 	return encodedBuffer
+}
+
+func SaveImage(imageData []byte, userName string) {
+	decodedData := ImageDataDecoder(imageData)
+
+	salt := "_#^!?_"
+	fileName := fmt.Sprintf("./images/%s%s%s.jpg", userName, salt, strconv.FormatInt(time.Now().Unix(), 10))
+
+	// Save the decoded data to a file for verification
+	err := ioutil.WriteFile(fileName, decodedData, 0644)
+	if err != nil {
+		fmt.Println("Error saving image:", err)
+	}
 }

@@ -14,7 +14,8 @@ func main() {
 	defer faceRecognition.Rec.Close()
 
 	// init ws
-	http.HandleFunc("/ws", wshandler.WebsocketHandler)
+	http.HandleFunc("/face-rec", wshandler.WebsocketFaceRecHandler)
+	http.HandleFunc("/face-register", wshandler.WebsocketFaceRegisterHandler)
 
 	// start server on port 8080
 	log.Println("Server listening on port 8080...")

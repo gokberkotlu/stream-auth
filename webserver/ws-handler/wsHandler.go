@@ -1,6 +1,7 @@
 package wshandler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -27,7 +28,7 @@ var upgrader = websocket.Upgrader{
 // var mutex sync.Mutex
 
 // WebSocket handler function
-func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
+func WebsocketFaceRecHandler(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Failed to upgrade connection:", err)
@@ -48,9 +49,39 @@ func WebsocketHandler(w http.ResponseWriter, r *http.Request) {
 		mutex.Lock()
 		runtime.LockOSThread()
 
-		var latestImageData []byte = imagedatacont.ImageDataDecoder(imageData)
+		var latestImageData []byte = imagedatacont.ImageDataEncodedBuffer(imageData)
 		mutex.Unlock()
 
 		go faceRecognition.PerformFaceRecognition(latestImageData, conn)
+	}
+}
+
+func WebsocketFaceRegisterHandler(w http.ResponseWriter, r *http.Request) {
+	userName := r.URL.Query().Get("name")
+	fmt.Println("******-----------*************", userName)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Failed to upgrade connection:", err)
+		return
+	}
+	defer conn.Close()
+
+	for {
+		// Read the message from the client
+		_, imageData, err := conn.ReadMessage()
+
+		if err != nil {
+			log.Println("Failed to read message:", err)
+			break
+		}
+
+		// Update the latest image data
+		mutex.Lock()
+		runtime.LockOSThread()
+
+		mutex.Unlock()
+
+		// go imagedatacont.SaveImage(imageData, userName)
+		go faceRecognition.CheckFaceForRegistration(imageData, imagedatacont.ImageDataEncodedBuffer(imageData), userName, conn)
 	}
 }
