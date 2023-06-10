@@ -1,5 +1,6 @@
 import { Button, Input, message } from "antd";
 import React, { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
 interface ISingleRecRes {
   Min: {
@@ -24,6 +25,15 @@ const Register: React.FC = () => {
   const videoElement = useRef<HTMLVideoElement>(null);
 
   const startStream = async () => {
+    const regex = /^[^\s]*$/;
+    if (!regex.test(userName)) {
+      message.error("Username cannot contain spaces");
+      return;
+    } else if (userName.length < 3) {
+      message.error("Username must be at least 3 characters");
+      return;
+    }
+
     try {
       socketRef.current = new WebSocket(
         `ws://localhost:8080/face-register?name=${userName}`
@@ -148,8 +158,6 @@ const Register: React.FC = () => {
   };
 
   useEffect(() => {
-    // startStream();
-
     return () => closeWsConnection();
   }, []);
 
@@ -198,9 +206,16 @@ const Register: React.FC = () => {
       >
         Start Registration
       </Button>
-      <Button type="primary" onClick={stopRegistration}>
+      <Button
+        type="primary"
+        onClick={stopRegistration}
+        style={{ marginRight: 5 }}
+      >
         Stop Registration
       </Button>
+      <Link to="/">
+        <Button type="primary">Back Home</Button>
+      </Link>
     </div>
   );
 };

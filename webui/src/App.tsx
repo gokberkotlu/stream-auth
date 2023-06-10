@@ -4,15 +4,39 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/Notfound.tsx";
 import Dashboard from "./pages/Dashboard";
+import { useState } from "react";
 
 function App() {
+  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+
   return (
     <div className="App">
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dashboard />} />
+        <Route
+          path="/login"
+          element={
+            loggedIn ? (
+              <Navigate to="/dashboard" />
+            ) : (
+              <Login setLoggedIn={setLoggedIn} />
+            )
+          }
+        />
+        <Route
+          path="/register"
+          element={loggedIn ? <Navigate to="/dashboard" /> : <Register />}
+        />
+        <Route
+          path="/dashboard"
+          element={
+            loggedIn ? (
+              <Dashboard setLoggedIn={setLoggedIn} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

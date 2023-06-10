@@ -10,15 +10,20 @@ import { Breadcrumb, Layout, Menu, theme } from "antd";
 import "./styles.css";
 import { useNavigate } from "react-router-dom";
 
+interface Props {
+  setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
 const { Header, Content, Sider } = Layout;
-const App: React.FC = () => {
+const App: React.FC<Props> = ({ setLoggedIn }) => {
   const navigate = useNavigate();
-  
+
   const loginLSKey = "stream_auth_user";
   const userName = localStorage.getItem(loginLSKey);
 
   const logout = () => {
     localStorage.removeItem(loginLSKey);
+    setLoggedIn(false);
     navigate("/login");
   };
 
@@ -97,7 +102,8 @@ const App: React.FC = () => {
             }}
           >
             <p style={{ color: "#333", fontWeight: 900, fontSize: "1rem" }}>
-              Welcome <span style={{ color: "tomato" }}>{userName?.toUpperCase()}</span>
+              Welcome{" "}
+              <span style={{ color: "tomato" }}>{userName?.toUpperCase()}</span>
             </p>
           </Content>
         </Layout>

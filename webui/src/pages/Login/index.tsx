@@ -1,5 +1,10 @@
+import { Button, message } from "antd";
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+
+interface Props {
+  setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
 interface IRecRes {
   name: string;
@@ -15,7 +20,7 @@ interface IRecRes {
   };
 }
 
-const Login: React.FC = () => {
+const Login: React.FC<Props> = ({ setLoggedIn }) => {
   const socket = new WebSocket("ws://localhost:8080/face-rec");
   const navigate = useNavigate();
 
@@ -23,6 +28,8 @@ const Login: React.FC = () => {
   const [userName, setUserName] = useState<string>("");
 
   const videoElement = useRef<HTMLVideoElement>(null);
+
+  const wsMessageInParseError = useRef<string>("");
 
   const startStream = async () => {
     try {
@@ -46,15 +53,20 @@ const Login: React.FC = () => {
         console.log("WebSocket connection closed");
       };
 
-      socket.onmessage = (message) => {
+      socket.onmessage = (socketMessage) => {
         captureAndSendImage();
-        console.log(message.data, typeof message.data);
-        if (message?.data) {
+        console.log(socketMessage.data, typeof socketMessage.data);
+        if (socketMessage?.data) {
           let response: IRecRes;
 
           try {
-            response = JSON.parse(message.data);
+            response = JSON.parse(socketMessage.data);
           } catch (err) {
+            if (wsMessageInParseError.current !== socketMessage.data) {
+              wsMessageInParseError.current = socketMessage.data;
+              message.error(socketMessage.data);
+            }
+
             setRectanglePoints("0,0 0,0 0,0 0,0");
             return;
           }
@@ -141,6 +153,7 @@ const Login: React.FC = () => {
 
   const login = (userName: string) => {
     localStorage.setItem("stream_auth_user", userName);
+    setLoggedIn(true);
     closeWsConnection();
     navigate("/dashboard");
   };
@@ -192,6 +205,13 @@ const Login: React.FC = () => {
         >
           {userName}
         </span>
+
+        <br />
+        <br />
+        <br />
+        <Link to="/register">
+          <Button type="primary">Register</Button>
+        </Link>
       </div>
     </div>
   );
