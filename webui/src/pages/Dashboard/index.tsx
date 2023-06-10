@@ -9,6 +9,7 @@ import type { MenuProps } from "antd";
 import { Breadcrumb, Layout, Menu, theme } from "antd";
 import "./styles.css";
 import { useNavigate } from "react-router-dom";
+import { LOGIN_LS_KEY } from "../../constants";
 
 interface Props {
   setLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
@@ -18,11 +19,10 @@ const { Header, Content, Sider } = Layout;
 const App: React.FC<Props> = ({ setLoggedIn }) => {
   const navigate = useNavigate();
 
-  const loginLSKey = "stream_auth_user";
-  const userName = localStorage.getItem(loginLSKey);
+  const userName = localStorage.getItem(LOGIN_LS_KEY);
 
   const logout = () => {
-    localStorage.removeItem(loginLSKey);
+    localStorage.removeItem(LOGIN_LS_KEY);
     setLoggedIn(false);
     navigate("/login");
   };

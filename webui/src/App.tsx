@@ -5,9 +5,12 @@ import Register from "./pages/Register";
 import NotFound from "./pages/Notfound.tsx";
 import Dashboard from "./pages/Dashboard";
 import { useState } from "react";
+import { LOGIN_LS_KEY } from "./constants";
 
 function App() {
-  const [loggedIn, setLoggedIn] = useState<boolean>(false);
+  const [loggedIn, setLoggedIn] = useState<boolean>(
+    localStorage.getItem(LOGIN_LS_KEY) !== null
+  );
 
   return (
     <div className="App">
