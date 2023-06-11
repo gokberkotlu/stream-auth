@@ -5,10 +5,14 @@ import (
 	"net/http"
 
 	faceRecognition "stream-auth-webserver/face-recognition"
+	imagedatacont "stream-auth-webserver/image-data-cont"
 	wshandler "stream-auth-webserver/ws-handler"
 )
 
 func main() {
+	// check images folder
+	imagedatacont.CreateImagesDirectory()
+
 	// init recognizer
 	faceRecognition.InitImgDb()
 	defer faceRecognition.Rec.Close()

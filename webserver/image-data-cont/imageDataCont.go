@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -75,4 +76,24 @@ func SaveImage(userImage ICachedUserImages) {
 	if err != nil {
 		fmt.Println("Error saving image:", err)
 	}
+}
+
+func CreateImagesDirectory() {
+	imagesFolderExists, _ := imagesDirectoryExists()
+
+	if !imagesFolderExists {
+		os.Mkdir("./images", 0755)
+	}
+}
+
+func imagesDirectoryExists() (bool, error) {
+	path := "./images"
+	_, err := os.Stat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }
