@@ -55,7 +55,6 @@ const Login: React.FC<Props> = ({ setLoggedIn }) => {
 
       socket.onmessage = (socketMessage) => {
         captureAndSendImage();
-        console.log(socketMessage.data, typeof socketMessage.data);
         if (socketMessage?.data) {
           let response: IRecRes;
 
@@ -140,11 +139,6 @@ const Login: React.FC<Props> = ({ setLoggedIn }) => {
 
       // Send the image data to the server via WebSocket
       socket.send(imageData);
-
-      const date = new Date();
-      console.log(
-        `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
-      );
     } catch (err) {
       console.log("captureAndSendImage error:", err);
     }

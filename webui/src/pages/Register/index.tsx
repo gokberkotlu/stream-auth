@@ -166,11 +166,6 @@ const Register: React.FC = () => {
         // Send the image data to the server via WebSocket
         socketRef.current.send(imageData);
       }
-
-      const date = new Date();
-      console.log(
-        `${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`
-      );
     } catch (err) {
       console.log("captureAndSendImage error:", err);
     }

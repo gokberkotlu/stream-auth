@@ -1,6 +1,7 @@
 package wshandler
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -23,8 +24,6 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
-
-// var mutex sync.Mutex
 
 // WebSocket handler function
 func WebsocketFaceRecHandler(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +63,10 @@ func WebsocketFaceRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer conn.Close()
+
+	// on connection
+	fmt.Println("Client connected for registration")
+	imagedatacont.ClearCachedUserData(username)
 
 	for {
 		// Read the message from the client

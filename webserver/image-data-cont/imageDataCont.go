@@ -15,7 +15,7 @@ type ICachedUserImages struct {
 	ImageData []byte
 }
 
-var CachedUsers = map[string][]ICachedUserImages{}
+var cachedUsers = map[string][]ICachedUserImages{}
 
 var Salt string = "_#^!?_"
 
@@ -52,13 +52,13 @@ func ImageDataEncodedBuffer(imageData []byte) []byte {
 func RegisterUser(imageData []byte, userName string) bool {
 	fileName := fmt.Sprintf("./images/%s%s%s.jpg", userName, Salt, strconv.FormatInt(time.Now().Unix(), 10))
 
-	CachedUsers[userName] = append(CachedUsers[userName], ICachedUserImages{
+	cachedUsers[userName] = append(cachedUsers[userName], ICachedUserImages{
 		FileName:  fileName,
 		ImageData: imageData,
 	})
 
-	if len(CachedUsers[userName]) == 5 {
-		for _, userImage := range CachedUsers[userName] {
+	if len(cachedUsers[userName]) == 5 {
+		for _, userImage := range cachedUsers[userName] {
 			SaveImage(userImage)
 		}
 
@@ -96,4 +96,8 @@ func imagesDirectoryExists() (bool, error) {
 		return false, nil
 	}
 	return false, err
+}
+
+func ClearCachedUserData(username string) {
+	delete(cachedUsers, username)
 }
