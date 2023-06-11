@@ -1,7 +1,6 @@
 package wshandler
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -57,8 +56,8 @@ func WebsocketFaceRecHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func WebsocketFaceRegisterHandler(w http.ResponseWriter, r *http.Request) {
-	userName := r.URL.Query().Get("name")
-	fmt.Println("******-----------*************", userName)
+	username := r.URL.Query().Get("name")
+
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Failed to upgrade connection:", err)
@@ -82,6 +81,6 @@ func WebsocketFaceRegisterHandler(w http.ResponseWriter, r *http.Request) {
 		mutex.Unlock()
 
 		// go imagedatacont.SaveImage(imageData, userName)
-		go faceRecognition.CheckFaceForRegistration(imageData, imagedatacont.ImageDataEncodedBuffer(imageData), userName, conn)
+		go faceRecognition.CheckFaceForRegistration(imageData, imagedatacont.ImageDataEncodedBuffer(imageData), username, conn)
 	}
 }

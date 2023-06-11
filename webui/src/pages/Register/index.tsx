@@ -61,6 +61,10 @@ const Register: React.FC = () => {
       };
 
       socketRef.current.onmessage = (socketMessage) => {
+        if (socketMessage.data === "Username is used by another user") {
+          message.error(socketMessage.data);
+          return;
+        }
         if (registerCount.current > 1) {
           captureAndSendImage();
           console.log(socketMessage.data, typeof socketMessage.data);

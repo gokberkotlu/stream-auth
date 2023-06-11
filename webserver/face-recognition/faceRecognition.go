@@ -33,6 +33,8 @@ var Rec *face.Recognizer
 var faces []face.Face = []face.Face{}
 var labels []string = []string{}
 
+var usernameList []string
+
 func InitImgDb() {
 	var err error
 	Rec, err = face.NewRecognizer(modelsDir)
@@ -40,7 +42,13 @@ func InitImgDb() {
 		log.Fatalf("Can't init face recognizer: %v", err)
 	}
 
-	for _, imgName := range GetImageList() {
+	// get image names inside imagesDir
+	imageList := GetImageList()
+
+	// get user names from image files
+	usernameList = getUserNameList(imageList)
+
+	for _, imgName := range imageList {
 		refImage := filepath.Join(imagesDir, imgName)
 
 		recognizedFaces, err := Rec.RecognizeFile(refImage)
@@ -116,7 +124,12 @@ func PerformFaceRecognition(imageData []byte, wsConn *websocket.Conn) {
 	}
 }
 
-func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte, userName string, wsConn *websocket.Conn) {
+func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte, username string, wsConn *websocket.Conn) {
+	if checkIfUsernameAvailable(username) {
+		sendWsRes(wsConn, []byte("Username is used by another user"))
+		return
+	}
+
 	fmt.Println(time.Now())
 	userFace, err := Rec.RecognizeSingleCNN(encodedImageDataBuffer)
 	if err != nil {
@@ -142,7 +155,7 @@ func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte
 			}
 
 			// Save user image to file system if user is not defined before
-			registerResult := imagedatacont.RegisterUser(rawImageData, userName)
+			registerResult := imagedatacont.RegisterUser(rawImageData, username)
 			// if registration done, add images to Rec
 			if registerResult {
 				InitImgDb()
@@ -181,4 +194,26 @@ func GetImageList() []string {
 	}
 
 	return fileList
+}
+
+func getUserNameList(list []string) []string {
+	keys := make(map[string]bool)
+	output := []string{}
+	for _, entry := range list {
+		entry = strings.Split(entry, imagedatacont.Salt)[0]
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			output = append(output, entry)
+		}
+	}
+	return output
+}
+
+func checkIfUsernameAvailable(username string) bool {
+	for _, s := range usernameList {
+		if s == username {
+			return true
+		}
+	}
+	return false
 }
