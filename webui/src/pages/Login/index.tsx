@@ -120,7 +120,6 @@ const Login: React.FC<Props> = ({ setLoggedIn }) => {
   // Function to capture and send image data
   const captureAndSendImage = () => {
     try {
-      console.log("send image");
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
 

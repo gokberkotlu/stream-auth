@@ -1,6 +1,6 @@
-import { Button, Input, message } from "antd";
+import { Button, Input, Progress, message } from "antd";
 import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { HomeOutlined } from "@ant-design/icons";
 
 interface ISingleRecRes {
@@ -14,16 +14,20 @@ interface ISingleRecRes {
   };
 }
 
-// const socketRef.current = new WebSocket("ws://localhost:8080/face-register?name=thename");
+const REGISTER_IMAGE_COUNT = 5;
 
 const Register: React.FC = () => {
+  const navigate = useNavigate();
+
   const [rectanglePoints, setRectanglePoints] = useState<string>();
   const [userName, setUserName] = useState<string>("");
 
   const socketRef = useRef<WebSocket | null>(null);
-  const registerCount = useRef<number>(5);
+  const registerCount = useRef<number>(REGISTER_IMAGE_COUNT);
 
   const videoElement = useRef<HTMLVideoElement>(null);
+
+  const [registrationStep, setRegistrationStep] = useState<number>(0);
 
   const startStream = async () => {
     const regex = /^[^\s]*$/;
@@ -34,6 +38,10 @@ const Register: React.FC = () => {
       message.error("Username must be at least 3 characters");
       return;
     }
+
+    // registerCount and registrationStep registerCount
+    setRegistrationStep(0);
+    registerCount.current = REGISTER_IMAGE_COUNT;
 
     try {
       socketRef.current = new WebSocket(
@@ -65,31 +73,46 @@ const Register: React.FC = () => {
           message.error(socketMessage.data);
           return;
         }
+
+        let isRegistrationDone = false;
+        // if register number is not complete then continue to send image
         if (registerCount.current > 1) {
           captureAndSendImage();
-          console.log(socketMessage.data, typeof socketMessage.data);
-          if (socketMessage?.data) {
-            let rect: ISingleRecRes;
+        } else {
+          message.success("User registered");
+          setTimeout(() => {
+            navigate("/login");
+          }, 1500);
+          isRegistrationDone = true;
+        }
 
-            try {
-              rect = JSON.parse(socketMessage.data);
-            } catch (err) {
-              message.error(socketMessage.data);
+        if (socketMessage?.data) {
+          let rect: ISingleRecRes;
+
+          try {
+            rect = JSON.parse(socketMessage.data);
+          } catch (err) {
+            message.error(socketMessage.data);
+            setRectanglePoints("0,0 0,0 0,0 0,0");
+            return;
+          }
+
+          const { X: x1, Y: y1 } = rect?.Min;
+          const { X: x2, Y: y2 } = rect?.Max;
+
+          if (x1 && y1 && x2 && y2) {
+            setRegistrationStep((prev) => prev + 1);
+
+            // set rect here, and check if registration is done
+            if (isRegistrationDone) {
               setRectanglePoints("0,0 0,0 0,0 0,0");
-              return;
-            }
-
-            const { X: x1, Y: y1 } = rect?.Min;
-            const { X: x2, Y: y2 } = rect?.Max;
-
-            if (x1 && y1 && x2 && y2) {
+            } else {
               setRectanglePoints(
                 `${x1},${y1} ${x2},${y1} ${x2},${y2} ${x1},${y2}`
               );
-              registerCount.current -= 1;
-            } else {
-              setRectanglePoints("0,0 0,0 0,0 0,0");
             }
+
+            registerCount.current -= 1;
           } else {
             setRectanglePoints("0,0 0,0 0,0 0,0");
           }
@@ -121,7 +144,6 @@ const Register: React.FC = () => {
   // Function to capture and send image data
   const captureAndSendImage = () => {
     try {
-      console.log("send image");
       const canvas = document.createElement("canvas");
       const context = canvas.getContext("2d");
 
@@ -170,7 +192,7 @@ const Register: React.FC = () => {
     <div style={{ height: "100vh", backgroundColor: "#c3c3c3" }}>
       <div
         className="videoRect"
-        style={{ position: "relative", display: "inline-block" }}
+        style={{ position: "relative", display: "inline-block", marginTop: "3rem" }}
       >
         <video ref={videoElement} autoPlay></video>
 
@@ -193,8 +215,15 @@ const Register: React.FC = () => {
           />
         </svg>
       </div>
+
       <br />
       <br />
+
+      <Progress percent={registrationStep * 20} style={{ width: 500 }} />
+
+      <br />
+      <br />
+
       <div
         style={{
           display: "inline-block",
