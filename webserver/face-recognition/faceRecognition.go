@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	imagedatacont "stream-auth-webserver/image-data-cont"
 	"strings"
-	"time"
 
 	"github.com/Kagami/go-face"
 	"github.com/gorilla/websocket"
@@ -73,31 +72,21 @@ func InitImgDb() {
 	}
 
 	Rec.SetSamples(samples, ids)
-
-	fmt.Println("ids", ids)
-	fmt.Println("Rec val:", Rec)
 }
 
 func PerformFaceRecognition(imageData []byte, wsConn *websocket.Conn) {
-	fmt.Println(time.Now())
 	userFace, err := Rec.RecognizeSingleCNN(imageData)
 	if err != nil {
 		fmt.Printf("Can't recognize: %v\n", err)
 	}
-	fmt.Println(time.Now())
 
 	if userFace == nil {
 		noFaceDetectedMessage := "Not a single face on the image"
-		fmt.Println(noFaceDetectedMessage)
 		sendWsRes(wsConn, []byte(noFaceDetectedMessage))
 	} else {
-		ID := Rec.ClassifyThreshold(userFace.Descriptor, 0.4)
-		fmt.Println("ID:", ID)
+		ID := Rec.ClassifyThreshold(userFace.Descriptor, 0.2)
 
 		if ID != -1 {
-			fmt.Println(userFace.Rectangle)
-			fmt.Println(userFace.Shapes)
-
 			wsRes := IRecRes{
 				Rect: userFace.Rectangle,
 				Name: labels[ID],
@@ -118,7 +107,6 @@ func PerformFaceRecognition(imageData []byte, wsConn *websocket.Conn) {
 			}
 		} else {
 			notRecognizedText := "User not identified"
-			fmt.Println(notRecognizedText)
 			sendWsRes(wsConn, []byte(notRecognizedText))
 		}
 	}
@@ -130,20 +118,16 @@ func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte
 		return
 	}
 
-	fmt.Println(time.Now())
 	userFace, err := Rec.RecognizeSingleCNN(encodedImageDataBuffer)
 	if err != nil {
 		fmt.Printf("Can't recognize: %v\n", err)
 	}
-	fmt.Println(time.Now())
 
 	if userFace == nil {
 		noFaceDetectedMessage := "Not a single face on the image"
-		fmt.Println(noFaceDetectedMessage)
 		sendWsRes(wsConn, []byte(noFaceDetectedMessage))
 	} else {
-		ID := Rec.ClassifyThreshold(userFace.Descriptor, 0.4)
-		fmt.Println("ID:", ID)
+		ID := Rec.ClassifyThreshold(userFace.Descriptor, 0.2)
 
 		if ID == -1 {
 			// Convert the rectangle to JSON
@@ -168,7 +152,6 @@ func CheckFaceForRegistration(rawImageData []byte, encodedImageDataBuffer []byte
 			}
 		} else {
 			notRecognizedText := "User already defined"
-			fmt.Println(notRecognizedText)
 			sendWsRes(wsConn, []byte(notRecognizedText))
 		}
 	}

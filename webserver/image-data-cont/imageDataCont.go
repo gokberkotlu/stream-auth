@@ -21,7 +21,6 @@ var Salt string = "_#^!?_"
 
 func ImageDataDecoder(imageData []byte) []byte {
 	encodedBase64StrImageData := string(imageData)
-	// fmt.Println(imageData)
 
 	// Split the data URI to extract the base64-encoded image data
 	parts := strings.Split(encodedBase64StrImageData, ",")
